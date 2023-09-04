@@ -1,2 +1,2 @@
 # RNA
-Redes Neuronales Artificiales
+Redes Neuronales Artificiales del curso de otoño 2023 BUAP
