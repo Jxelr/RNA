@@ -1,19 +1,7 @@
 # %load network.py
-"""El siguiente código es una implementación de una red neuronal feedforward usando el 
-algoritmo de entrenamiento de stochastic gradient descent (SGD) para reconocimiento de dígitos escritos
+"""El siguiente código es una implementación de una red neuronal para reconocimiento de dígitos escritos
 a mano usando el conjunto de datos MNIST."""
 
-"""
-network.py
-~~~~~~~~~~
-IT WORKS
-
-A module to implement the stochastic gradient descent learning
-algorithm for a feedforward neural network.  Gradients are calculated
-using backpropagation.  Note that I have focused on making the code
-simple, easily readable, and easily modifiable.  It is not optimized,
-and omits many desirable features.
-"""
 
 #### Libraries
 
@@ -24,6 +12,21 @@ import random
 
 # Librerias de terceros
 import numpy as np
+
+# Importación del módulo mnist_loader
+import mnist_loader
+
+#Funciones misceláneas. La función sigmoid en la función de activación utilizada en la RNA. 
+#La función sigmoid_prime es la derivada de la función sigmoidal.
+def sigmoid(z):
+    """La función sigmoidal."""
+    return 1.0/(1.0+np.exp(-z))
+
+def sigmoid_prime(z):
+    """Derivada de la función sigmoidal."""
+    return sigmoid(z)*(1-sigmoid(z))
+
+
 
 #Se define la clase Network( red neuronal)
 class Network(object):
@@ -40,6 +43,12 @@ class Network(object):
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]] #Inicialización de los biases
         self.weights = [np.random.randn(y, x) 
                         for x, y in zip(sizes[:-1], sizes[1:])] #Inicialización de los weights.
+        self.m_sq_weights = [np.zeros(w.shape) for w in self.weights] 
+        """Lista de matrices que se utiliza para realizar un seguimiento de los cuadrados de los gradientes con respecto a los pesos correspondientes en la red.
+        Estos cuadrados se utilizan posteriormente en el cálculo de la actualización de los pesos en el algoritmo RMSprop."""
+        self.m_sq_biases = [np.zeros(b.shape) for b in self.biases]   
+        """Lista de matrices que se utiliza para realizar un seguimiento de los cuadrados de los gradientes con respecto a los sesgos correspondientes en la red. 
+        Estos cuadrados también se utilizan posteriormente en el cálculo de la actualización de los sesgos en el algoritmo RMSprop."""
 
     def feedforward(self, a):
         """Regresa la salida de la red neuyronal dado un input 'a'. 
@@ -51,48 +60,25 @@ class Network(object):
         return a
     
 
-    def SGD(self, training_data, epochs, mini_batch_size, eta,
-            test_data=None):
-        """Entrena la RNA utilizando el SGD en mini-batches. 
-        
-        El parámetro 'training-data' es una lista de yuplas (x,y) que representan las entradas de entrenamiento y las salidas desedas. El resto de parámetros son autoexplicativos. Si 'test_data' es proporcionado, entonces
-        la red se evaluará frente a los datos de prueba después de cada época y se imprimirá el progreso. Con esto podemos hacer un seguimiento del progreso en la eficacia de la red. """
-
-        training_data = list(training_data) #Convierte los datos de entrenamiento en una lista
-        n = len(training_data) #número de ejemplos de entrenamiento
-
-        if test_data:
-            test_data = list(test_data) #Convierte los datos de prueba en una lista
-            n_test = len(test_data)  #Número de ejemplos de prueba. 
-
-        for j in range(epochs):
-            random.shuffle(training_data)  #Mezcla los datos de entrenamiento.
-            mini_batches = [
-                training_data[k:k+mini_batch_size]
-                for k in range(0, n, mini_batch_size)] #divide los datos en mini-batches
-            for mini_batch in mini_batches:
-                self.update_mini_batch(mini_batch, eta)  # Actualiza la red con un mini-batch
-            if test_data:
-                print("Epoch {} : {} / {}".format(j,self.evaluate(test_data),n_test))
-            else:
-                print("Epoch {} complete".format(j))
-
-    def update_mini_batch(self, mini_batch, eta):
+    def update_mini_batch(self, mini_batch, eta, rho= 0.9, epsilon=1e-8):
         """Actualiza los weights y los biases de la red aplicando el SGD utilizando backpropagation a un solo mini-batch.
         
         El parámetro 'mini_batch' es una lista de tuplas (x,y) qeu representan un mini-batch y 'eta' es la tasa de aprendizaje (learning rate)."""
 
         nabla_b = [np.zeros(b.shape) for b in self.biases]  # Inicializa los gradientes de los biases
         nabla_w = [np.zeros(w.shape) for w in self.weights] # Inicializa los gradientes de los pesos 
+
         for x, y in mini_batch:
             delta_nabla_b, delta_nabla_w = self.backprop(x, y) #Calcula los gradientes para el 'mini-batch'
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)] #Acumula los gradientes de los biases
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)] #Acumula los gradientes de los weights
-        self.weights = [w-(eta/len(mini_batch))*nw
-                        for w, nw in zip(self.weights, nabla_w)]  # Actualiza los weights
-        self.biases = [b-(eta/len(mini_batch))*nb
-                       for b, nb in zip(self.biases, nabla_b)]  # Actualiza los biases
 
+        self.m_sq_weights = [rho * m_sq_w + (1 - rho) * (nw ** 2) for m_sq_w, nw in zip(self.m_sq_weights, nabla_w)]
+        self.m_sq_biases = [rho * m_sq_b + (1 - rho) * (nb ** 2) for m_sq_b, nb in zip(self.m_sq_biases, nabla_b)]
+
+        self.weights = [w - eta * nw / (np.sqrt(m_sq_w) + epsilon) for w, nw, m_sq_w in zip(self.weights, nabla_w, self.m_sq_weights)]  #Actualiza los weights
+        self.biases = [b - eta * nb / (np.sqrt(m_sq_b) + epsilon) for b, nb, m_sq_b in zip(self.biases, nabla_b, self.m_sq_biases)]  #Actualiza los biases
+    """Se implementa RMSprop para adaptar la tasa de aprendizaje para cada peso y sesgo buscando mejorar la convergencia,"""
     def backprop(self, x, y):
         """Regresa una tupla (nabla_b , nabla_w) que representa el gradiente para la función de costo C_x.
          
@@ -104,14 +90,15 @@ class Network(object):
         activation = x
         activations = [x] # lista para almacenar todas las activaciones, capa por capa
         zs = [] # lista para almacenar todos los vectores z, capa por capa
+
         for b, w in zip(self.biases, self.weights):
             z = np.dot(w, activation)+b
             zs.append(z)
             activation = sigmoid(z)
             activations.append(activation)
         # backpropagation
-        delta = self.cost_derivative(activations[-1], y) * \
-            sigmoid_prime(zs[-1])
+
+        delta = self.cost_derivative(activations[-1], y) * sigmoid_prime(zs[-1])
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
         
@@ -133,32 +120,51 @@ class Network(object):
         return sum(int(x == y) for (x, y) in test_results)
 
     def cost_derivative(self, output_activations, y):
-        """Retgresa el vector de derivadas parciales \partial C_x/ \partial a
+        """Regresa el vector de derivadas parciales \partial C_x/ \partial a
         para las activaciones de salida.
         """
         return (output_activations-y)
 
-#Funciones misceláneas. La función sigmoid en la función de activación utilizada en la RNA. 
-#La función sigmoid_prime es la derivada de la función sigmoidal.
-def sigmoid(z):
-    """La función sigmoidal."""
-    return 1.0/(1.0+np.exp(-z))
 
-def sigmoid_prime(z):
-    """Derivada de la función sigmoidal."""
-    return sigmoid(z)*(1-sigmoid(z))
+    def SGD(self, training_data, epochs, mini_batch_size, eta,
+            test_data=None):
+        """Entrena la RNA utilizando el SGD en mini-batches. 
+        
+        El parámetro 'training-data' es una lista de tuplas (x,y) que representan las entradas de entrenamiento y las salidas desedas. El resto de parámetros son autoexplicativos. Si 'test_data' es proporcionado, entonces
+        la red se evaluará frente a los datos de prueba después de cada época y se imprimirá el progreso. Con esto podemos hacer un seguimiento del progreso en la eficacia de la red. """
 
-# Importación del módulo mnist_loader
-import mnist_loader
+        training_data = list(training_data) #Convierte los datos de entrenamiento en una lista
+        n = len(training_data) #número de ejemplos de entrenamiento
+
+        if test_data:
+            test_data = list(test_data) #Convierte los datos de prueba en una lista
+            n_test = len(test_data)  #Número de ejemplos de prueba. 
+
+        for j in range(epochs):
+            random.shuffle(training_data)  #Mezcla los datos de entrenamiento.
+            mini_batches = [
+                training_data[k:k+mini_batch_size]
+                for k in range(0, n, mini_batch_size)] #divide los datos en mini-batches
+            
+            for mini_batch in mini_batches:
+                self.update_mini_batch(mini_batch, eta)  # Actualiza la red con un mini-batch
+
+            if test_data:
+                print("Epoch {} : {} / {}".format(j,self.evaluate(test_data),n_test))
+            else:
+                print("Epoch {} complete".format(j))
+
 
 #Carga de datos de entrenamiento, validación y prueba utilizando mnist_loader
 training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 
 #Importación del módulo network
-import network
+#import network
 
 #Creación de la red con capas [x,y,z]
-net = network.Network([784, 30, 10])
+net =  Network([784, 100, 10])
 
-#Entrenamiento de la red neuronal utilizando SGD
-net.SGD(training_data, 30, 10, 3.0, test_data=test_data)
+#Entrenamiento de la red neuronal utilizando RMSprop
+net.SGD(training_data, 30, 10, 0.01, test_data=test_data)
+
+#Jxel Ismael Gutierrez Rojas 
