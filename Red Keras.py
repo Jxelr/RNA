@@ -15,7 +15,7 @@ from tensorflow.keras import regularizers
 
 """Configuramos los parámetros tasa de aprendizaje, épocas y el batch-size para el entrenamiento de la redd neuronal."""
 
-learning_rate = 0.01
+learning_rate = 0.001
 epochs = 30
 batch_size = 10
 
