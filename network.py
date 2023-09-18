@@ -167,4 +167,4 @@ net =  Network([784, 100, 10])
 #Entrenamiento de la red neuronal utilizando RMSprop
 net.SGD(training_data, 30, 10, 0.01, test_data=test_data)
 
-#Jxel Ismael Gutierrez Rojas 
+#Jxel Ismael Gutierrez Rojas
