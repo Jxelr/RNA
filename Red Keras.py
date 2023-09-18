@@ -8,7 +8,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense #Dropout, Activation
+from tensorflow.keras.layers import Dense, Dropout, Activation
 from tensorflow.keras.optimizers.legacy import RMSprop
 from tensorflow.keras import regularizers 
 
@@ -48,7 +48,7 @@ y_testc = keras.utils.to_categorical(y_test, num_classes)
 """Creación y definición de la Red Neuronal"""
 
 model = Sequential() #Crea el objeto de modelo sencuencial en keras (capas apiladas una encima de la otra)
-model.add(Dense(100, activation='sigmoid', input_shape=(784,)))  #Agrega una capa densa a la RNA con x neuronas, usa la función de activación sigmoide y tiene una capa de entrada de 784
+model.add(Dense(300, activation='sigmoid', input_shape=(784,)))  #Agrega una capa densa a la RNA con x neuronas, usa la función de activación sigmoide y tiene una capa de entrada de 784
 model.add(Dense(num_classes, activation='sigmoid'))  #Segunda capa densa con neuronas = 'num_classes' (generalmente 10) y usa la función de activación sigmoide.
 
 
