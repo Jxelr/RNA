@@ -15,8 +15,8 @@ from tensorflow.keras import regularizers
 
 """Configuramos los parámetros tasa de aprendizaje, épocas y el batch-size para el entrenamiento de la redd neuronal."""
 
-learning_rate = 0.001
-epochs = 30
+learning_rate = 0.01
+epochs = 35
 batch_size = 10
 
 
@@ -48,7 +48,7 @@ y_testc = keras.utils.to_categorical(y_test, num_classes)
 """Creación y definición de la Red Neuronal"""
 
 model = Sequential() #Crea el objeto de modelo sencuencial en keras (capas apiladas una encima de la otra)
-model.add(Dense(300, activation='sigmoid', input_shape=(784,)))  #Agrega una capa densa a la RNA con x neuronas, usa la función de activación sigmoide y tiene una capa de entrada de 784
+model.add(Dense(600, activation='sigmoid', input_shape=(784,)))  #Agrega una capa densa a la RNA con x neuronas, usa la función de activación sigmoide y tiene una capa de entrada de 784 
 model.add(Dense(num_classes, activation='sigmoid'))  #Segunda capa densa con neuronas = 'num_classes' (generalmente 10) y usa la función de activación sigmoide.
 
 
