@@ -5,18 +5,19 @@ para construir el modelo y cargar el conjunto de datos MNIST"""
 
 
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Activation
 from tensorflow.keras.optimizers.legacy import RMSprop
-from tensorflow.keras import regularizers 
+from tensorflow.keras import regularizers
 
 
 """Configuramos los parámetros tasa de aprendizaje, épocas y el batch-size para el entrenamiento de la redd neuronal."""
 
-learning_rate = 0.01
-epochs = 35
+learning_rate = 0.001
+epochs = 30
 batch_size = 10
 
 
@@ -48,8 +49,8 @@ y_testc = keras.utils.to_categorical(y_test, num_classes)
 """Creación y definición de la Red Neuronal"""
 
 model = Sequential() #Crea el objeto de modelo sencuencial en keras (capas apiladas una encima de la otra)
-model.add(Dense(600, activation='sigmoid', input_shape=(784,)))  #Agrega una capa densa a la RNA con x neuronas, usa la función de activación sigmoide y tiene una capa de entrada de 784 
-model.add(Dense(num_classes, activation='sigmoid'))  #Segunda capa densa con neuronas = 'num_classes' (generalmente 10) y usa la función de activación sigmoide.
+model.add(Dense(400, activation='sigmoid', input_shape=(784,),)) #kernel_regularizer=regularizers.l1(0.001)))  #Agrega una capa densa a la RNA con x neuronas, usa la función de activación sigmoide y tiene una capa de entrada de 784 
+model.add(Dense(num_classes, activation='softmax',)) #kernel_regularizer=regularizers.l1(0.001)))  #Segunda capa densa con neuronas = 'num_classes' (generalmente 10) y usa la función de activación sigmoide.
 
 
 #model.summary()  #Imprime un resumen de la arquitectura del modelo
@@ -78,5 +79,11 @@ score = model.evaluate(x_testv, y_testc, verbose=0)  #Evalua el modelo usando lo
 
 print('Pérdida en el conjunto de prueba:', score[0]) #Imprime la función de pérdida
 print('Precisión en el conjunto de prueba:', score[1]) #Imprime la precisión 
+
+# Gráfico de precisión
+plt.plot(history.history['accuracy'], label='train')
+plt.plot(history.history['val_accuracy'], label='test')
+plt.legend()
+plt.show()
 
 #Jxel Rojas
