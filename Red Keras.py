@@ -49,8 +49,8 @@ y_testc = keras.utils.to_categorical(y_test, num_classes)
 """Creación y definición de la Red Neuronal"""
 
 model = Sequential() #Crea el objeto de modelo sencuencial en keras (capas apiladas una encima de la otra)
-model.add(Dense(500, activation='sigmoid', input_shape=(784,),kernel_regularizer=regularizers.l2(0.0001))) #kernel_regularizer=regularizers.l1(0.001)))  #Agrega una capa densa a la RNA con x neuronas, usa la función de activación sigmoide y tiene una capa de entrada de 784 
-model.add(Dense(num_classes, activation='softmax',kernel_regularizer=regularizers.l2(0.0001))) #kernel_regularizer=regularizers.l1(0.001)))  #Segunda capa densa con neuronas = 'num_classes' (generalmente 10) y usa la función de activación sigmoide.
+model.add(Dense(500, activation='sigmoid', input_shape=(784,),kernel_regularizer=regularizers.l1_l2(l1=0.001, l2=0.01))) #kernel_regularizer=regularizers.l1(0.001)))  #Agrega una capa densa a la RNA con x neuronas, usa la función de activación sigmoide y tiene una capa de entrada de 784 
+model.add(Dense(num_classes, activation='softmax',kernel_regularizer=regularizers.l1_l2(l1=0.001, l2=0.01))) #kernel_regularizer=regularizers.l1(0.001)))  #Segunda capa densa con neuronas = 'num_classes' (generalmente 10) y usa la función de activación sigmoide.
 
 
 #model.summary()  #Imprime un resumen de la arquitectura del modelo
