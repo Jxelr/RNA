@@ -1,7 +1,7 @@
 """Códigos de la Tarea 5: 
 Funciones, Modelos personalizados y Ecuaciones Diferenciales"""
 
-#2 - a)
+#2 - b)
 
 """Importamos librerías"""
 
@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 x = np.linspace(-1,1,100) #Genera 100 puntos en el intervalo [-1,1]
 
-y = 3 * np.sin(np.pi * x) #Calcula los valores de y de la función
+y = 1 + 2 * x + 4 * x**3 #Calcula los valores de y de la función
 
 
 """Definimos y compilamos el modelo de la RNA en keras"""
@@ -42,11 +42,11 @@ y_pred = model.predict(x_eval)
 #Grafica la función y la predicción de la red neuronal
 plt.figure(figsize=(10, 6))
 plt.plot(x_eval, y_pred, label='Predicción de la red')
-plt.plot(x, y, label='3*sin(pi*x)', linestyle='--', linewidth=2)
+plt.plot(x, y, label='1 + 2x + 4x^3', linestyle='--', linewidth=2)
 plt.xlabel('x')
 plt.ylabel('y')
 plt.legend()
-plt.title('Ajuste de la red neuronal a 3*sin(pi*x)')
+plt.title('Ajuste de la red neuronal a 1 + 2x + 4x^3')
 plt.grid(True)
 plt.show()
 
