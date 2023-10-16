@@ -12,6 +12,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Layer, Dropout
 from tensorflow.keras.optimizers.legacy import RMSprop, Adam, SGD 
 import matplotlib.pyplot as plt
+import math
 
 
 class ODEsolver(Sequential):
@@ -23,31 +24,40 @@ class ODEsolver(Sequential):
     @property
     def metrics(self):
         return [self.loss_tracker]
-
-
-    def train_step(self, data):
+    
+    def train_step(self, data): #paso de entrenamiento
+        
         batch_size = tf.shape(data)[0]
-        min = tf.cast(tf.reduce_min(data),tf.float32)
-        max = tf.cast(tf.reduce_max(data),tf.float32)
-        x = tf.random.uniform((batch_size,1), minval=min, maxval=max)
-
+        
+        #vector de numeros aleatorios
+        x = tf.random.uniform((batch_size, 1), minval = -5, maxval = 5)
+        
+        
+        #GradientTape es la funcion que calcula derivadas
         with tf.GradientTape() as tape:
-            with tf.GradientTape() as tape2: 
-                tape2.watch(x)
-                y_pred = self(x, training=True)
-            dy = tape2.gradient(y_pred, x)  
+          with tf.GradientTape() as tape2:
+            tape2.watch(x)   #vigila todas las operaciones que se hacen con la variable x
+       
+            with tf.GradientTape(persistent=True) as tape3: 
+              tape3.watch(x)
+              x_o = tf.zeros((batch_size, 1))
+              tape3.watch(x_o)
+              y_pred = self(x, training = True)
+              y_o = self(x_o, training = True)
 
-            """Vectores de Ceros"""
-            x_0 = tf.zeros((batch_size,1))
-            y_0 = self(x_0,training=True)
+            dy = tape3.gradient(y_pred, x)
+            
+          dy_2=tape2.gradient(dy,x)
+          
 
-            #Ecuación Diferencial
-            eq = x* dy + y_pred - x*x*tf.cos(x)
-
-            #Condición Inicial, y(0)=0
-            ic = 0. 
-
-            loss = self.mse(0., eq) + self.mse(y_0, ic)
+        #Ecuacion diferencial 
+          eq = dy_2 + y_pred 
+            
+        # Condiciones Iniciales
+          ic = y_o - 1.  # y(0) = 1
+          ic_2 = y_o - 0.5  # y(1) = -0.5
+        
+          loss = self.mse(0., eq) + self.mse(0., ic) + self.mse(0., ic_2) 
 
         #Gradientes
         grads = tape.gradient(loss, self.trainable_variables)
@@ -57,12 +67,14 @@ class ODEsolver(Sequential):
         self.loss_tracker.update_state(loss)
 
         return{"loss": self.loss_tracker.result()}    
+    
 
 #Se define el modelo
 model = ODEsolver()
 
-model.add(Dense(30, activation="tanh", input_shape=(1,)))
-model.add(Dense(10, activation="tanh"))
+model.add(Dense(20, activation="tanh", input_shape=(1,)))
+model.add(Dense(20, activation="tanh"))
+model.add(Dense(20, activation="tanh"))
 model.add(Dense(1, activation= "linear"))
 
 model.compile(optimizer='RMSprop', metrics=['loss'])
@@ -76,9 +88,9 @@ x_testv = tf.linspace(-5, 5, 100)
 a = model.predict(x_testv)
 
 #Gráfica
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(10, 10))
 plt.plot(x_testv, a, label="aprox", linewidth=2)
-plt.plot(x_testv, x*np.sin(x) -2.*(-x*np.cos(x) + np.sin(x))/ x, label="exact", color = 'red', linestyle='--', linewidth=2)
+plt.plot(x_testv, tf.cos(x) - 0.5*tf.sin(x), label="exact", color = 'red', linestyle='--', linewidth=2)
 plt.xlabel('x')
 plt.ylabel('y')
 plt.legend()
